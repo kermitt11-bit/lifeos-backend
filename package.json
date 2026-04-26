@@ -1,0 +1,232 @@
+{
+  "name": "lifeos-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "node api/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1"
+  }
+}
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.js"
+    }
+  ],
+  "env": {
+    "SUPABASE_URL": "@supabase_url",
+    "SUPABASE_SERVICE_KEY": "@supabase_service_key"
+  }
+}import express from 'express';
+import cors from 'cors';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+/**
+ * ─── DEVICE REGISTRATION ───
+ */
+app.post('/api/auth/init', async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    
+    const { data: existing } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('device_id', deviceId)
+      .single();
+    
+    if (existing) {
+      return res.json({ 
+        token: existing.token, 
+        message: 'Device recognized',
+        status: 'success'
+      });
+    }
+    
+    const token = crypto.randomUUID();
+    const { data } = await supabase
+      .from('devices')
+      .insert([{ device_id: deviceId, token }])
+      .select()
+      .single();
+    
+    res.json({ 
+      token: data.token, 
+      message: 'Device registered',
+      status: 'success'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * ─── SYNC (GET/POST) ───
+ */
+app.get('/api/sync', async (req, res) => {
+  try {
+    const token = req.headers['x-auth-token'];
+    if (!token) return res.status(401).json({ error: 'No token' });
+    
+    const { data: device } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('token', token)
+      .single();
+    
+    if (!device) return res.status(401).json({ error: 'Invalid token' });
+    
+    const { data: state } = await supabase
+      .from('user_state')
+      .select('data')
+      .eq('device_id', device.device_id)
+      .single();
+    
+    res.json(state?.data || {});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/sync', async (req, res) => {
+  try {
+    const token = req.headers['x-auth-token'];
+    const { delta, fullState } = req.body;
+    
+    if (!token) return res.status(401).json({ error: 'No token' });
+    
+    const { data: device } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('token', token)
+      .single();
+    
+    if (!device) return res.status(401).json({ error: 'Invalid token' });
+    
+    const { data: current } = await supabase
+      .from('user_state')
+      .select('data')
+      .eq('device_id', device.device_id)
+      .single();
+    
+    const merged = fullState || { ...current?.data, ...delta };
+    
+    await supabase
+      .from('user_state')
+      .upsert({
+        device_id: device.device_id,
+        data: merged,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'device_id' });
+    
+    res.json({ synced: true, timestamp: new Date() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * ─── BACKUP ───
+ */
+app.get('/api/backup', async (req, res) => {
+  try {
+    const token = req.headers['x-auth-token'];
+    const { data: device } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('token', token)
+      .single();
+    
+    if (!device) return res.status(401).json({ error: 'Invalid token' });
+    
+    const { data: state } = await supabase
+      .from('user_state')
+      .select('data')
+      .eq('device_id', device.device_id)
+      .single();
+    
+    res.json({
+      backup: state?.data || {},
+      timestamp: new Date(),
+      device: device.device_id
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/restore', async (req, res) => {
+  try {
+    const token = req.headers['x-auth-token'];
+    const { backup } = req.body;
+    
+    const { data: device } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('token', token)
+      .single();
+    
+    if (!device) return res.status(401).json({ error: 'Invalid token' });
+    
+    await supabase
+      .from('user_state')
+      .upsert({
+        device_id: device.device_id,
+        data: backup,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'device_id' });
+    
+    await supabase
+      .from('backups')
+      .insert([{
+        device_id: device.device_id,
+        data: backup
+      }]);
+    
+    res.json({ restored: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * ─── HEALTH CHECK ───
+ */
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date() });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Life OS backend running on port ${PORT}`);
+});SUPABASE_URL=your-supabase-url-here
+SUPABASE_SERVICE_KEY=your-service-role-key-herenode_modules/
+.env
+.env.local
+.DS_Store
+*.log
