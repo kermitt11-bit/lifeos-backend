@@ -28,8 +28,8 @@
     }
   ],
   "env": {
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_SERVICE_KEY": "@supabase_service_key"
+    "SUPABASE_URL": "https://hsicdnzouzaqzdvwgcxa.supabase.co",
+    "SUPABASE_SERVICE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzaWNkbnpvdXphcXpkdndnY3hhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzIyODE1OCwiZXhwIjoyMDkyODA0MTU4fQ.tAaIiQKcQl-78bS9c75aEkGmpiVkq4blICEb9tfP32Y"
   }
 }import express from 'express';
 import cors from 'cors';
