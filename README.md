@@ -1,16 +1,30 @@
 # LifeOS — Planner Journal
 
-A native iOS planner + journal app written in SwiftUI/SwiftData, paired with an
-optional Express + Supabase backend for cross-device sync.
+A planner + journal you can use today on iPhone (PWA, no Mac required) **and**
+a full native iOS SwiftUI app for when you have Xcode access. Both share the
+same feature surface; both store data locally on-device.
 
 ```
 .
+├── public/               # PWA — open in Safari, "Add to Home Screen"
 ├── ios/                  # Native iOS app (SwiftUI, iOS 17+)
 │   ├── LifeOS.xcodeproj
 │   └── LifeOS/
 └── api/                  # Express backend (optional sync target)
     └── index.js
 ```
+
+## Install on iPhone (no Mac, ~30 seconds)
+
+This repo deploys to Vercel automatically. Once the latest commit is live:
+
+1. Open the deploy URL in **Safari** on your iPhone
+   (e.g. `https://lifeos-backend-*.vercel.app/`)
+2. Tap the **Share** icon → **Add to Home Screen** → **Add**
+3. Launch from your home screen — it now runs full-screen like a native app,
+   saves your data to the phone (IndexedDB), and works offline.
+
+Your data lives in your phone's storage. Nothing leaves the device.
 
 ## What's in the app
 
