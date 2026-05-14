@@ -37,6 +37,8 @@ function showApp() {
   $('#login').hidden = true;
   $('#app').hidden = false;
   $('#user-id').textContent = userId;
+  const greet = $('#greeting-name');
+  if (greet) greet.textContent = userId;
   loadAll();
 }
 function showLogin() {
@@ -163,8 +165,13 @@ $('#chat-input').addEventListener('keydown', (e) => {
 // --- Tasks ----------------------------------------------------------------
 
 function priorityPill(p) {
-  const labels = { 1: 'P1', 2: 'P2', 3: 'P3', 4: 'P4', 5: 'P5' };
-  return `<span class="pill">${labels[p] || 'P3'}</span>`;
+  const labels = { 1: 'urgent', 2: 'high', 3: 'normal', 4: 'low', 5: 'someday' };
+  const cls = p === 1 ? 'tag-priority-1' : p === 2 ? 'tag-priority-2' : 'tag-priority-3';
+  return `<span class="pill ${cls}">${labels[p] || 'normal'}</span>`;
+}
+
+function emptyState(glyph, why) {
+  return `<li><div class="empty"><div class="glyph">${escapeHtml(glyph)}</div><div class="why">${escapeHtml(why)}</div></div></li>`;
 }
 
 async function loadTasks() {
@@ -174,7 +181,7 @@ async function loadTasks() {
   const list = $('#task-list');
   list.innerHTML = '';
   if (!tasks.length) {
-    list.innerHTML = `<li class="card"><div class="body muted">Nothing here. Use the chat to add a task: "add task: write README".</div></li>`;
+    list.innerHTML = emptyState('—', 'Nothing here yet. Ask the chat: "add task: write README".');
     return;
   }
   for (const t of tasks) {
@@ -262,7 +269,7 @@ async function loadGoals() {
   const list = $('#goal-list');
   list.innerHTML = '';
   if (!goals.length) {
-    list.innerHTML = `<li class="card"><div class="body muted">No goals yet.</div></li>`;
+    list.innerHTML = emptyState('—', 'No goals yet. What would you like to move toward?');
     return;
   }
   for (const g of goals) {
@@ -272,13 +279,13 @@ async function loadGoals() {
       <div class="body">
         <div class="title">${escapeHtml(g.title)}</div>
         <div class="meta">
-          <span class="pill">${g.status}</span>
-          ${g.target_date ? `<span class="pill">by ${g.target_date}</span>` : ''}
+          <span class="pill tag-status">${escapeHtml(g.status)}</span>
+          ${g.target_date ? `<span class="pill">by ${escapeHtml(g.target_date)}</span>` : ''}
         </div>
-        ${g.description ? `<div class="meta" style="margin-top:6px">${escapeHtml(g.description)}</div>` : ''}
+        ${g.description ? `<div class="meta-body">${escapeHtml(g.description)}</div>` : ''}
       </div>
       <div class="row-actions">
-        <button class="action" data-del="${g.id}">✕</button>
+        <button class="action" data-del="${g.id}" aria-label="Delete">✕</button>
       </div>
     `;
     li.querySelector('[data-del]').onclick = async () => {
@@ -309,7 +316,7 @@ async function loadHabits() {
   const list = $('#habit-list');
   list.innerHTML = '';
   if (!habits.length) {
-    list.innerHTML = `<li class="card"><div class="body muted">No habits tracked.</div></li>`;
+    list.innerHTML = emptyState('—', 'No habits tracked. Small consistent actions add up.');
     return;
   }
   for (const h of habits) {
@@ -372,7 +379,7 @@ async function loadJournal() {
   const list = $('#journal-list');
   list.innerHTML = '';
   if (!entries.length) {
-    list.innerHTML = `<li class="card"><div class="body muted">No journal entries.</div></li>`;
+    list.innerHTML = emptyState('—', 'A blank page. What\'s on your mind today?');
     return;
   }
   for (const j of entries) {
@@ -382,14 +389,14 @@ async function loadJournal() {
       <div class="body">
         <div class="title">${escapeHtml(j.title || j.entry_date)}</div>
         <div class="meta">
-          <span class="pill">${j.entry_date}</span>
-          ${j.mood ? `<span class="pill">mood ${j.mood}/10</span>` : ''}
+          <span class="pill">${escapeHtml(j.entry_date)}</span>
+          ${j.mood ? `<span class="pill tag-mood">mood ${j.mood}/10</span>` : ''}
           ${(j.tags||[]).map((t) => `<span class="pill">#${escapeHtml(t)}</span>`).join('')}
         </div>
-        <div class="meta" style="margin-top:8px; color:var(--text); white-space: pre-wrap;">${escapeHtml(j.body)}</div>
+        <div class="meta-body">${escapeHtml(j.body)}</div>
       </div>
       <div class="row-actions">
-        <button class="action" data-del="${j.id}">✕</button>
+        <button class="action" data-del="${j.id}" aria-label="Delete">✕</button>
       </div>
     `;
     li.querySelector('[data-del]').onclick = async () => {
@@ -437,18 +444,21 @@ function renderPlan(data) {
   out.innerHTML = '';
   if (data.critical_path?.critical?.length) {
     const cp = document.createElement('div');
-    cp.className = 'plan-row';
-    cp.innerHTML = `<span class="when">Critical path</span><span>${data.critical_path.critical.length} tasks · ${data.critical_path.projectEnd}m total</span>`;
+    cp.className = 'plan-row highlight';
+    cp.innerHTML = `<span class="when">Critical path</span><span class="what">${data.critical_path.critical.length} tasks · ${data.critical_path.projectEnd} min total</span>`;
     out.appendChild(cp);
   }
   for (const p of (data.plan?.placements || [])) {
     const row = document.createElement('div');
     row.className = 'plan-row';
     const start = new Date(p.start);
-    row.innerHTML = `<span class="when">${start.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</span><span>${escapeHtml(p.title || p.task_id)}</span>`;
+    const when = start.toLocaleString(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    row.innerHTML = `<span class="when">${escapeHtml(when)}</span><span class="what">${escapeHtml(p.title || p.task_id)}</span>`;
     out.appendChild(row);
   }
-  if (!out.children.length) out.innerHTML = '<p class="muted">Nothing to schedule.</p>';
+  if (!out.children.length) {
+    out.innerHTML = `<div class="plan-row"><span class="what muted">Nothing to schedule.</span></div>`;
+  }
 }
 $('#plan-preview-btn').onclick = () => planPreview().catch((e) => toast(e.message));
 $('#plan-apply-btn').onclick = () => planApply().catch((e) => toast(e.message));
@@ -464,7 +474,10 @@ function refreshAllInBackground() {
 async function loadAll() {
   showTab('chat');
   $('#chat-log').innerHTML = '';
-  addBubble('Hi. I\'m your Life OS planner. Type "help" for commands, or ask me anything.', 'bot');
+  addBubble(
+    'Tell me what\'s on your mind, or try:\n  • add task: buy oat milk\n  • add goal: learn to surf\n  • journal: felt steady today\n  • show my tasks',
+    'bot',
+  );
   refreshAllInBackground();
 }
 
