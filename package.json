@@ -1,14 +1,21 @@
 {
   "name": "lifeos-backend",
   "version": "1.0.0",
+  "description": "Optional sync backend for the LifeOS iOS planner + journal app.",
   "type": "module",
+  "main": "api/index.js",
   "scripts": {
-    "start": "node api/index.js"
+    "start": "node api/index.js",
+    "dev": "node --watch api/index.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
     "@supabase/supabase-js": "^2.39.0",
-    "dotenv": "^16.3.1"
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
   }
 }
+
