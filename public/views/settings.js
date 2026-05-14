@@ -1,5 +1,5 @@
-import { html, useState } from "../lib/ui.js";
-import { state, setKV, exportJSON, eraseAll } from "../lib/store.js";
+import { html, useState, useRef } from "../lib/ui.js";
+import { state, setKV, exportJSON, importJSON, eraseAll } from "../lib/store.js";
 
 export function SettingsView() {
   const userName = state.userName.value;
@@ -7,6 +7,8 @@ export function SettingsView() {
   const reminderEnabled = state.reminderEnabled.value;
   const reminderHour = state.reminderHour.value;
   const [exportText, setExportText] = useState("");
+  const [importStatus, setImportStatus] = useState("");
+  const fileInput = useRef(null);
 
   async function doExport() {
     const text = await exportJSON();
@@ -27,6 +29,20 @@ export function SettingsView() {
     if (!confirm("Erase all local data? This cannot be undone.")) return;
     await eraseAll();
     location.reload();
+  }
+
+  async function doImport(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const n = await importJSON(text);
+      setImportStatus(`Imported ${n} records.`);
+    } catch (err) {
+      setImportStatus(`Import failed: ${err.message}`);
+    } finally {
+      e.target.value = "";
+    }
   }
 
   async function requestNotifications() {
@@ -79,6 +95,9 @@ export function SettingsView() {
       <div class="card form-card">
         <h3>Data</h3>
         <button class="btn-secondary" onClick=${doExport}>Export as JSON</button>
+        <button class="btn-secondary" onClick=${() => fileInput.current?.click()}>Import from JSON</button>
+        <input ref=${fileInput} type="file" accept="application/json,.json" style="display:none" onChange=${doImport} />
+        ${importStatus && html`<p class="muted small">${importStatus}</p>`}
         <button class="btn-danger" onClick=${doErase}>Erase all local data</button>
         ${exportText && html`<textarea readonly rows="6" class="mono">${exportText.slice(0, 4000)}${exportText.length > 4000 ? "\n…" : ""}</textarea>`}
       </div>

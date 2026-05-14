@@ -397,6 +397,36 @@ small { font-size: 12px; }
   50% { transform: scale(1.25); opacity: 1; }
 }
 
+/* Install hint */
+.install-hint {
+  position: fixed; left: 0; right: 0;
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  z-index: 90; padding: 0 12px;
+  animation: rise .3s ease;
+}
+@keyframes rise { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.install-card {
+  background: var(--canvas); border: 1px solid var(--border);
+  border-radius: 18px; padding: 14px;
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,0.35);
+  max-width: 520px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.install-head { display: flex; justify-content: space-between; align-items: center; }
+.install-steps {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-top: 4px;
+}
+.install-steps > span {
+  background: var(--surface-2); padding: 6px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 600;
+}
+.ios-share {
+  display: inline-block;
+  background: var(--accent); color: white; border-radius: 6px;
+  padding: 1px 6px; font-size: 12px; vertical-align: 1px;
+}
+
 @media (min-width: 600px) {
   .main { padding-left: 24px; padding-right: 24px; }
 }

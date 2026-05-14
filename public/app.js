@@ -9,6 +9,7 @@ import { InsightsView } from "/views/insights.js";
 import { SettingsView } from "/views/settings.js";
 import { Sheet } from "/views/sheets.js";
 import { moodEmoji } from "/lib/utils.js";
+import { shouldShowIOSHint, dismissIOSHint } from "/lib/install.js";
 
 const TABS = [
   { id: "today",    label: "Today",    icon: "☀️" },
@@ -23,6 +24,7 @@ function App() {
   const [tab, setTab] = useState("today");
   const [sheet, setSheet] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showInstallHint, setShowInstallHint] = useState(false);
 
   useEffect(() => {
     const keys = Object.keys(state);
@@ -30,6 +32,9 @@ function App() {
     load();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+    if (shouldShowIOSHint()) {
+      setTimeout(() => setShowInstallHint(true), 1500);
     }
     return () => unsubs.forEach((u) => u && u());
   }, []);
@@ -86,6 +91,27 @@ function App() {
       `}
 
       <${Sheet} payload=${sheet} onClose=${() => setSheet(null)} />
+
+      ${showInstallHint && html`<${InstallHint} onDismiss=${() => { dismissIOSHint(); setShowInstallHint(false); }} />`}
+    </div>
+  `;
+}
+
+function InstallHint({ onDismiss }) {
+  return html`
+    <div class="install-hint">
+      <div class="install-card">
+        <div class="install-head">
+          <strong>Install LifeOS</strong>
+          <button class="link" onClick=${onDismiss}>Not now</button>
+        </div>
+        <p class="muted small">Make it feel native: tap <span class="ios-share">⇪</span> Share, then <strong>Add to Home Screen</strong>. It'll launch full-screen, work offline, and keep all your data.</p>
+        <div class="install-steps">
+          <span>1. Tap <span class="ios-share">⇪</span></span>
+          <span>2. "Add to Home Screen"</span>
+          <span>3. "Add"</span>
+        </div>
+      </div>
     </div>
   `;
 }

@@ -71,3 +71,19 @@ export async function exportJSON() {
   const data = await db.exportAll();
   return JSON.stringify(data, null, 2);
 }
+
+export async function importJSON(text) {
+  const parsed = JSON.parse(text);
+  let count = 0;
+  for (const key of Object.keys(STORE_FOR)) {
+    const store = STORE_FOR[key];
+    const items = Array.isArray(parsed[key] ?? parsed[store]) ? (parsed[key] ?? parsed[store]) : [];
+    for (const item of items) {
+      if (!item) continue;
+      await db.put(store, item);
+      count += 1;
+    }
+    state[key].value = await db.getAll(store);
+  }
+  return count;
+}

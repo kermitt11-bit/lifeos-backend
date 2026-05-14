@@ -1,4 +1,4 @@
-const VERSION = "lifeos-v1";
+const VERSION = "lifeos-v2";
 const SHELL = [
   "/",
   "/index.html",
@@ -12,6 +12,8 @@ const SHELL = [
   "/lib/store.js",
   "/lib/ui.js",
   "/lib/utils.js",
+  "/lib/haptic.js",
+  "/lib/install.js",
   "/views/today.js",
   "/views/planner.js",
   "/views/journal.js",

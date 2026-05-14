@@ -4,6 +4,7 @@ import {
   greeting, fmtDate, moodEmoji, randomPrompt,
   isSameDay, startOfDay, categoryFor, priorityFor, streakFor, uuid,
 } from "../lib/utils.js";
+import { tap, success } from "../lib/haptic.js";
 
 export function TodayView({ openSheet }) {
   const today = new Date();
@@ -36,6 +37,7 @@ export function TodayView({ openSheet }) {
   const completedCount = todayTasks.filter((t) => t.completed).length;
 
   async function toggleTask(t) {
+    if (!t.completed) success(); else tap();
     await upsert("tasks", {
       ...t,
       completed: !t.completed,
@@ -49,8 +51,10 @@ export function TodayView({ openSheet }) {
       (l) => l.habitId === h.id && startOfDay(l.date).getTime() === todayMs
     );
     if (existing) {
+      tap();
       await remove("habitLogs", existing.id);
     } else {
+      success();
       await upsert("habitLogs", {
         id: uuid(),
         habitId: h.id,

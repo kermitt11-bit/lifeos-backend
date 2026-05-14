@@ -3,6 +3,7 @@ import { state, upsert, remove } from "../lib/store.js";
 import {
   addDays, startOfDay, isSameDay, streakFor, completionsThisWeek, uuid,
 } from "../lib/utils.js";
+import { tap, success } from "../lib/haptic.js";
 
 export function HabitsView({ openSheet }) {
   const habits = state.habits.value;
@@ -25,14 +26,18 @@ export function HabitsView({ openSheet }) {
     const existing = logs.find(
       (l) => l.habitId === h.id && startOfDay(l.date).getTime() === t
     );
-    if (existing) await remove("habitLogs", existing.id);
-    else
+    if (existing) {
+      tap();
+      await remove("habitLogs", existing.id);
+    } else {
+      success();
       await upsert("habitLogs", {
         id: uuid(),
         habitId: h.id,
         date: new Date().toISOString(),
         completed: true,
       });
+    }
   }
 
   return html`
