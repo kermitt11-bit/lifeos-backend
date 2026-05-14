@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#0b0d10" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Life OS</title>
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2376e08c'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-family='system-ui' font-size='38' font-weight='700' fill='%23051110'%3EL%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand">Life&nbsp;OS</div>
+    <div class="me"><span id="user-id" class="muted">—</span>
+      <button id="logout" class="icon-btn" title="Sign out">⎋</button>
+    </div>
+  </header>
+
+  <main id="screen-chat" class="screen">
+    <div id="chat-log" class="chat-log"></div>
+    <form id="chat-form" class="chat-form">
+      <textarea id="chat-input" rows="1" placeholder="Ask the planner. Try: add task: buy oat milk" autocomplete="off"></textarea>
+      <button class="primary" id="chat-send">Send</button>
+    </form>
+    <p class="hint muted" id="chat-mode-hint"></p>
+  </main>
+
+  <main id="screen-tasks" class="screen" hidden>
+    <div class="filter-row">
+      <select id="task-status">
+        <option value="">All</option><option value="todo" selected>To do</option>
+        <option value="doing">Doing</option><option value="blocked">Blocked</option>
+        <option value="done">Done</option>
+      </select>
+      <button class="primary" id="new-task-btn">+ New</button>
+    </div>
+    <ul id="task-list" class="card-list"></ul>
+  </main>
+
+  <main id="screen-goals" class="screen" hidden>
+    <div class="filter-row">
+      <span class="muted">Goals</span>
+      <button class="primary" id="new-goal-btn">+ New</button>
+    </div>
+    <ul id="goal-list" class="card-list"></ul>
+  </main>
+
+  <main id="screen-habits" class="screen" hidden>
+    <div class="filter-row">
+      <span class="muted">Habits</span>
+      <button class="primary" id="new-habit-btn">+ New</button>
+    </div>
+    <ul id="habit-list" class="card-list"></ul>
+  </main>
+
+  <main id="screen-journal" class="screen" hidden>
+    <div class="filter-row">
+      <span class="muted">Journal</span>
+      <button class="primary" id="new-journal-btn">+ New</button>
+    </div>
+    <ul id="journal-list" class="card-list"></ul>
+  </main>
+
+  <main id="screen-plan" class="screen" hidden>
+    <div class="plan-controls">
+      <p class="muted">Auto-schedules your open tasks into free working hours, respecting dependencies.</p>
+      <div class="row">
+        <label>From <input id="plan-from" type="number" min="0" max="23" value="9" /></label>
+        <label>To <input id="plan-to" type="number" min="0" max="23" value="18" /></label>
+      </div>
+      <div class="row">
+        <button class="primary" id="plan-preview-btn">Preview</button>
+        <button class="primary outline" id="plan-apply-btn">Apply</button>
+      </div>
+    </div>
+    <div id="plan-output"></div>
+  </main>
+
+  <nav class="tabbar">
+    <button data-tab="chat" class="active">💬<span>Chat</span></button>
+    <button data-tab="tasks">✓<span>Tasks</span></button>
+    <button data-tab="goals">◎<span>Goals</span></button>
+    <button data-tab="habits">↻<span>Habits</span></button>
+    <button data-tab="journal">✎<span>Journal</span></button>
+    <button data-tab="plan">⌛<span>Plan</span></button>
+  </nav>
+</div>
+
+<div id="login" class="login">
+  <div class="login-card">
+    <h1>Life OS</h1>
+    <p class="muted">Personal operations backend with an agentic planner.</p>
+    <label>Pick a handle to use in demo mode</label>
+    <input id="login-name" type="text" inputmode="text" autocapitalize="off" autocomplete="off" placeholder="e.g. dani" />
+    <button class="primary" id="login-btn">Enter</button>
+    <p class="hint muted">No password. Your data lives in memory on the server until the container restarts.</p>
+  </div>
+</div>
+
+<dialog id="modal">
+  <form id="modal-form" method="dialog">
+    <h3 id="modal-title">Add</h3>
+    <div id="modal-fields"></div>
+    <menu>
+      <button value="cancel">Cancel</button>
+      <button class="primary" id="modal-save" value="save">Save</button>
+    </menu>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>

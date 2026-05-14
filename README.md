@@ -1,7 +1,8 @@
 # lifeos-backend
 
-An agentic personal Life-OS backend. A single Express service on Vercel that runs
-on top of Supabase (Postgres + RLS + pgvector) and Claude.
+An agentic personal Life-OS backend with a mobile-first SPA. A single Express
+service on Vercel that runs on top of Supabase (Postgres + RLS + pgvector) and
+Claude — or in **demo mode** entirely in-memory, no setup required.
 
 It bundles three things people usually ship separately:
 
@@ -9,9 +10,14 @@ It bundles three things people usually ship separately:
    habits + logs, journal entries, calendar events.
 2. **An agentic planner endpoint** — Claude with first-class tool-calling that
    can create/update tasks, schedule events, log habits, and write journal
-   entries on behalf of the authenticated user.
+   entries on behalf of the authenticated user. Falls back to a pattern-matched
+   local agent when no Anthropic key is configured, so the demo UI still works.
 3. **Personal RAG over your own data** — hybrid (pgvector + Postgres FTS)
    retrieval with cited, streaming answers, plus auto-ingestion of every write.
+
+The bundled SPA at `/` is a mobile-first PWA-installable web app with screens
+for chat, tasks, goals, habits, journal, and the auto-scheduler. Open it on
+your phone and add to home screen.
 
 ## Architecture
 
@@ -38,12 +44,23 @@ authorization, only for outgoing writes that need a `user_id` column.
 
 ## Setup
 
+### Demo mode (no setup)
+
+`npm install && DEMO_MODE=1 npm run dev`, then open
+`http://localhost:3000/` on your phone (same Wi-Fi). Every request without a
+`SUPABASE_URL` is served from an in-memory store keyed by an `X-Demo-User`
+header that the SPA sets from `localStorage`. Data lives only as long as the
+Node process. The Vercel deploy of this branch already runs in demo mode
+unless you set Supabase env vars.
+
+### Production mode
+
 1. Create a Supabase project. In the SQL editor, run `db/schema.sql`. It enables
    `pgvector`, creates all tables with RLS, and installs the `match_memories`
    hybrid-retrieval function.
-2. Copy `.env.example` to `.env` and fill in keys. Only `SUPABASE_URL` and
-   `SUPABASE_ANON_KEY` are strictly required; everything else degrades cleanly
-   (no LLM → /chat and /agent return 503; no Voyage key → keyword-only search).
+2. Copy `.env.example` to `.env` and fill in keys. Without `ANTHROPIC_API_KEY`
+   the agent endpoint uses a pattern-matched fallback; without `VOYAGE_API_KEY`
+   retrieval falls back to keyword-only search.
 3. `npm install && npm run dev`.
 
 ## Endpoints

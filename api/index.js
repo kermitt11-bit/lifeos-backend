@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import { env } from '../lib/env.js';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { env, isDemoMode } from '../lib/env.js';
 import { errorMiddleware } from '../lib/errors.js';
 
 import goals from '../routes/goals.js';
@@ -20,9 +22,17 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
-app.get('/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
-app.get('/', (_req, res) => res.json({
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDir = path.resolve(__dirname, '..', 'public');
+
+app.get('/health', (_req, res) => res.json({
+  ok: true, ts: Date.now(), demoMode: isDemoMode(),
+}));
+
+app.get('/api', (_req, res) => res.json({
   name: 'lifeos-backend',
+  demoMode: isDemoMode(),
   endpoints: [
     'GET  /health',
     'CRUD /api/goals',
@@ -38,6 +48,11 @@ app.get('/', (_req, res) => res.json({
     'POST /cron/daily-summary, /cron/weekly-review',
   ],
 }));
+
+app.use(express.static(publicDir, { extensions: ['html'], maxAge: '1h' }));
+app.get('/app', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+app.get('/app/*', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+app.get('/', (_req, res) => res.redirect('/app'));
 
 app.use('/api/goals', goals);
 app.use('/api/tasks', tasks);

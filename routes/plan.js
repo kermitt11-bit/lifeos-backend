@@ -32,6 +32,10 @@ router.post('/preview', wrap(async (req, res) => {
     workStartHour: req.body?.workStartHour ?? 9,
     workEndHour: req.body?.workEndHour ?? 18,
   });
+  const titleById = new Map((sorted || []).map((t) => [t.id, t.title]));
+  if (plan.placements) {
+    plan.placements = plan.placements.map((p) => ({ ...p, title: titleById.get(p.task_id) || p.task_id }));
+  }
   res.json({ critical_path: cp, plan });
 }));
 
