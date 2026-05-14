@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Life OS</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <span>Life OS</span>
+      </div>
+      <div class="progress-pill" id="progressPill">—</div>
+    </header>
+
+    <section class="card flow" id="flowCard">
+      <div class="card-head">
+        <h1 id="flowHeadline">Loading…</h1>
+        <p class="subline" id="flowSubline"></p>
+      </div>
+      <div class="mode-row" id="modeRow"></div>
+      <div class="mvp-row">
+        <label class="switch">
+          <input type="checkbox" id="mvpToggle" />
+          <span>Minimum Viable Day</span>
+        </label>
+        <input class="focus-input" id="focusInput" placeholder="One focus for today…" />
+      </div>
+      <ul class="checklist" id="checklist"></ul>
+    </section>
+
+    <section class="grid">
+      <section class="card">
+        <h2>Recovery</h2>
+        <p class="muted" id="recoveryStatus">Nothing active. That's okay.</p>
+        <div class="chips" id="recoveryTriggers"></div>
+        <div id="recoveryActive"></div>
+      </section>
+
+      <section class="card">
+        <h2>Mood</h2>
+        <div class="chips" id="moodChips">
+          <button data-mood="calm">calm</button>
+          <button data-mood="ok">ok</button>
+          <button data-mood="meh">meh</button>
+          <button data-mood="anxious">anxious</button>
+          <button data-mood="tired">tired</button>
+          <button data-mood="low">low</button>
+          <button data-mood="bright">bright</button>
+        </div>
+        <p class="muted" id="moodNote"></p>
+      </section>
+
+      <section class="card">
+        <h2>Today's Meals</h2>
+        <ul class="plain" id="mealList"></ul>
+        <div class="row gap">
+          <select id="craveSelect">
+            <option value="">Crave check…</option>
+            <option value="sweet">sweet</option>
+            <option value="salty">salty</option>
+            <option value="crunchy">crunchy</option>
+            <option value="emotional">emotional</option>
+          </select>
+        </div>
+        <ol class="plain" id="craveAdvice"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Movement</h2>
+        <p class="muted" id="workoutLabel">—</p>
+        <ul class="plain" id="workoutBlocks"></ul>
+        <button class="primary" id="completeWorkoutBtn">Mark done</button>
+      </section>
+
+      <section class="card">
+        <h2>Room reset</h2>
+        <p class="muted" id="roomLabel">10-min reset</p>
+        <ul class="checklist tight" id="roomSteps"></ul>
+        <button class="primary" id="logRoomBtn">Log reset</button>
+      </section>
+
+      <section class="card">
+        <h2>Progression</h2>
+        <p class="big" id="stageName">—</p>
+        <p class="muted" id="stageNote"></p>
+        <div class="bar"><div id="xpBar"></div></div>
+        <p class="muted small" id="xpDetail">—</p>
+        <ul class="plain small" id="streaks"></ul>
+      </section>
+    </section>
+  </main>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
