@@ -9,6 +9,7 @@ import food from "./routes/food.js";
 import fitness from "./routes/fitness.js";
 import environment from "./routes/environment.js";
 import progression from "./routes/progression.js";
+import next from "./routes/next.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,6 +24,7 @@ app.use("/api/food", food);
 app.use("/api/fitness", fitness);
 app.use("/api/environment", environment);
 app.use("/api/progression", progression);
+app.use("/api/next", next);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

@@ -312,6 +312,19 @@ export const identityStages = [
   { min: 7000, name: "Sanctuary", note: "Calm operating system. Hard to knock off course." },
 ];
 
+export const journalPrompts = [
+  "What's one thing your body did for you today?",
+  "What is taking up the most space in your head right now?",
+  "If today had a weather report, what would it be?",
+  "What's one thing future-you will thank present-you for?",
+  "What did you eat today that you actually enjoyed?",
+  "Where did you spend energy you didn't need to?",
+  "What's a small kindness you can show yourself in the next hour?",
+  "What's underneath the feeling you're trying to push away?",
+  "What would 'good enough' look like for the rest of today?",
+  "What's something you noticed today that you wouldn't have noticed a month ago?",
+];
+
 export const xpRules = {
   mood_checkin: 5,
   day_mode_set: 3,
@@ -326,4 +339,5 @@ export const xpRules = {
   morning_reset_step: 2,
   morning_reset_completed: 15,
   mvp_day_completed: 20,
+  journal_entry: 6,
 };

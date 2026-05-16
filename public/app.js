@@ -7,7 +7,7 @@ const api = (p, opts = {}) =>
 
 const $ = (id) => document.getElementById(id);
 
-const state = { today: null, options: null, triggers: null, recovery: null, progression: null };
+const state = { today: null, options: null, triggers: null, recovery: null, progression: null, next: null, journal: null };
 
 const renderModeRow = () => {
   const modes = state.options;
@@ -195,6 +195,37 @@ const renderProgression = () => {
   }
 };
 
+const renderNext = () => {
+  const n = state.next;
+  $("nextHeadline").textContent = n.headline;
+  $("nextDetail").textContent = n.detail;
+  $("nextWhy").textContent = n.why;
+  $("nextBadge").textContent = n.priority.replace(/_/g, " ");
+};
+
+const renderJournal = () => {
+  const j = state.journal;
+  $("journalPrompt").textContent = j.prompt;
+  const ul = $("journalList");
+  ul.innerHTML = "";
+  for (const entry of j.entries.slice().reverse()) {
+    const li = document.createElement("li");
+    const time = new Date(entry.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    li.innerHTML = `<span class="muted">${time}</span> — ${entry.text.replace(/</g, "&lt;")}`;
+    ul.appendChild(li);
+  }
+};
+
+const wireJournal = () => {
+  $("journalSaveBtn").addEventListener("click", async () => {
+    const text = $("journalText").value;
+    if (!text.trim()) return;
+    await api("/daily/journal", { method: "POST", body: { text, prompt: state.journal.prompt } });
+    $("journalText").value = "";
+    await loadAll();
+  });
+};
+
 const wireMood = () => {
   for (const btn of document.querySelectorAll("#moodChips button")) {
     btn.addEventListener("click", async () => {
@@ -242,13 +273,16 @@ const renderMoodNote = () => {
 };
 
 const loadAll = async () => {
-  [state.today, state.options, state.triggers, state.recovery, state.progression] = await Promise.all([
+  [state.today, state.options, state.triggers, state.recovery, state.progression, state.next, state.journal] = await Promise.all([
     api("/daily/today"),
     api("/daily/options"),
     api("/recovery/triggers"),
     api("/recovery/active"),
     api("/progression/"),
+    api("/next/"),
+    api("/daily/journal/today"),
   ]);
+  renderNext();
   renderModeRow();
   renderFlow();
   renderMeals();
@@ -257,9 +291,11 @@ const loadAll = async () => {
   renderRecovery();
   renderProgression();
   renderMoodNote();
+  renderJournal();
 };
 
 wireMood();
 wireCrave();
 wireMvpAndFocus();
+wireJournal();
 loadAll();

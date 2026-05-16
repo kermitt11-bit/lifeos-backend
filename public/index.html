@@ -16,6 +16,13 @@
       <div class="progress-pill" id="progressPill">—</div>
     </header>
 
+    <section class="card next" id="nextCard">
+      <div class="next-badge" id="nextBadge">next</div>
+      <h1 id="nextHeadline">…</h1>
+      <p class="subline" id="nextDetail"></p>
+      <p class="muted small" id="nextWhy"></p>
+    </section>
+
     <section class="card flow" id="flowCard">
       <div class="card-head">
         <h1 id="flowHeadline">Loading…</h1>
@@ -81,6 +88,14 @@
         <p class="muted" id="roomLabel">10-min reset</p>
         <ul class="checklist tight" id="roomSteps"></ul>
         <button class="primary" id="logRoomBtn">Log reset</button>
+      </section>
+
+      <section class="card">
+        <h2>Journal</h2>
+        <p class="muted" id="journalPrompt">…</p>
+        <textarea id="journalText" rows="3" placeholder="A few words. Not a novel."></textarea>
+        <button class="primary" id="journalSaveBtn">Save entry</button>
+        <ul class="plain small" id="journalList"></ul>
       </section>
 
       <section class="card">

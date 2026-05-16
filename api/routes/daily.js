@@ -11,6 +11,7 @@ import {
   mealTemplates,
   safeMeals,
   environmentFlows,
+  journalPrompts,
 } from "../data/seed.js";
 import { awardXp, bumpStreak } from "../services/progression.js";
 
@@ -155,6 +156,35 @@ router.post("/step/:id", (req, res) => {
     awardXp(id.startsWith("mvp_") ? "morning_reset_step" : "morning_reset_step");
   }
   res.json({ completedSteps: getState().today.completedSteps });
+});
+
+const promptForDate = (date) => {
+  const seed = [...date].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return journalPrompts[seed % journalPrompts.length];
+};
+
+router.get("/journal/today", (_req, res) => {
+  ensureToday();
+  const s = getState();
+  res.json({
+    prompt: promptForDate(s.today.date),
+    entries: s.history.journal.filter((j) => j.date === s.today.date),
+  });
+});
+
+router.post("/journal", (req, res) => {
+  const { text, prompt } = req.body ?? {};
+  if (!text || !String(text).trim()) return res.status(400).json({ error: "text required" });
+  update((s) => {
+    s.history.journal.push({
+      at: new Date().toISOString(),
+      date: s.today.date,
+      text: String(text).trim(),
+      prompt: prompt ?? null,
+    });
+  });
+  awardXp("journal_entry");
+  res.json({ ok: true });
 });
 
 export default router;

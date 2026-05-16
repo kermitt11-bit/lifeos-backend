@@ -44,17 +44,33 @@ const defaultState = () => ({
     roomResets: [],
     xpEvents: [],
     dayLogs: [],
+    journal: [],
   },
 });
 
 let state = null;
 let writeQueued = false;
 
+const migrate = (s) => {
+  const d = defaultState();
+  s.user ??= d.user;
+  s.user.streaks ??= d.user.streaks;
+  s.user.streaks.lastDates ??= {};
+  s.today ??= d.today;
+  s.today.completedSteps ??= [];
+  s.recovery ??= d.recovery;
+  s.history ??= d.history;
+  for (const key of Object.keys(d.history)) {
+    s.history[key] ??= [];
+  }
+  return s;
+};
+
 const load = () => {
   if (state) return state;
   try {
     if (fs.existsSync(STATE_PATH)) {
-      state = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
+      state = migrate(JSON.parse(fs.readFileSync(STATE_PATH, "utf8")));
     } else {
       state = defaultState();
       persist();
