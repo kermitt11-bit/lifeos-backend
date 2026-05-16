@@ -24,8 +24,34 @@
     </div>
   </header>
 
-  <main id="screen-chat" class="screen">
+  <main id="screen-today" class="screen">
     <h2 class="screen-title">Hello, <em id="greeting-name">friend</em>.</h2>
+    <p class="screen-sub" id="today-date">—</p>
+    <blockquote class="quote" id="today-quote">Loading the day…</blockquote>
+
+    <section class="today-section" id="today-events-section">
+      <h3 class="section-h">On the calendar</h3>
+      <ul id="today-events" class="card-list"></ul>
+    </section>
+
+    <section class="today-section" id="today-tasks-section">
+      <h3 class="section-h">Today's tasks</h3>
+      <ul id="today-tasks" class="card-list"></ul>
+    </section>
+
+    <section class="today-section" id="today-habits-section">
+      <h3 class="section-h">Rhythms</h3>
+      <ul id="today-habits" class="habit-chips"></ul>
+    </section>
+
+    <section class="today-section" id="today-journal-section">
+      <h3 class="section-h">Last words</h3>
+      <ul id="today-journal" class="card-list"></ul>
+    </section>
+  </main>
+
+  <main id="screen-chat" class="screen" hidden>
+    <h2 class="screen-title">Tell me <em>everything</em>.</h2>
     <p class="screen-sub">Your planner is listening.</p>
     <div id="chat-log" class="chat-log"></div>
     <form id="chat-form" class="chat-form">
@@ -96,7 +122,8 @@
   </main>
 
   <nav class="tabbar">
-    <button data-tab="chat" class="active">✦<span>Chat</span></button>
+    <button data-tab="today" class="active">☀<span>Today</span></button>
+    <button data-tab="chat">✦<span>Chat</span></button>
     <button data-tab="tasks">✓<span>Tasks</span></button>
     <button data-tab="goals">◎<span>Goals</span></button>
     <button data-tab="habits">↻<span>Habits</span></button>

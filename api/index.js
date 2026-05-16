@@ -15,6 +15,7 @@ import chat from '../routes/chat.js';
 import plan from '../routes/plan.js';
 import agent from '../routes/agent.js';
 import review from '../routes/review.js';
+import today from '../routes/today.js';
 import dailySummary from '../jobs/daily-summary.js';
 import weeklyReview from '../jobs/weekly-review.js';
 
@@ -64,6 +65,7 @@ app.use('/api/chat', chat);
 app.use('/api/plan', plan);
 app.use('/api/agent', agent);
 app.use('/api/review', review);
+app.use('/api/today', today);
 app.use('/cron/daily-summary', dailySummary);
 app.use('/cron/weekly-review', weeklyReview);
 

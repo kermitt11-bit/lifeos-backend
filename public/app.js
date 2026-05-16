@@ -63,16 +63,138 @@ $('#logout').onclick = () => {
 
 // --- Tabs -----------------------------------------------------------------
 
-const TABS = ['chat', 'tasks', 'goals', 'habits', 'journal', 'plan'];
+const TABS = ['today', 'chat', 'tasks', 'goals', 'habits', 'journal', 'plan'];
 function showTab(tab) {
   for (const t of TABS) $(`#screen-${t}`).hidden = (t !== tab);
   $$('.tabbar button').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'today') loadToday();
   if (tab === 'tasks') loadTasks();
   if (tab === 'goals') loadGoals();
   if (tab === 'habits') loadHabits();
   if (tab === 'journal') loadJournal();
 }
 $$('.tabbar button').forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
+
+// --- Today ----------------------------------------------------------------
+
+const QUOTES = [
+  ['What you do every day matters more than what you do once in a while.', 'Gretchen Rubin'],
+  ['Discipline is choosing between what you want now and what you want most.', 'Augusta F. Kantra'],
+  ['Small daily improvements are the key to staggering long-term results.', 'James Clear'],
+  ['You do not rise to the level of your goals. You fall to the level of your systems.', 'James Clear'],
+  ['The way to get started is to quit talking and begin doing.', 'Walt Disney'],
+  ['Action is the antidote to anxiety.', '—'],
+  ['The present moment is the only moment available to us, and it is the door to all moments.', 'Thich Nhat Hanh'],
+  ['Begin doing what you want to do now.', 'Marie Beynon Ray'],
+  ['Direction is more important than speed.', '—'],
+  ['It always seems impossible until it’s done.', 'Nelson Mandela'],
+];
+
+function dailyQuote() {
+  const seed = Math.floor(Date.now() / 86400000);
+  const q = QUOTES[seed % QUOTES.length];
+  return q;
+}
+
+async function loadToday() {
+  const [quote, author] = dailyQuote();
+  const dateEl = $('#today-date');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  const qEl = $('#today-quote');
+  if (qEl) qEl.innerHTML = `&ldquo;${escapeHtml(quote)}&rdquo; <span class="quote-author">— ${escapeHtml(author)}</span>`;
+
+  let data;
+  try { data = await api('/api/today'); }
+  catch (e) { toast(e.message || 'Could not load today'); return; }
+
+  // Events
+  const ev = $('#today-events');
+  ev.innerHTML = '';
+  if (!data.events.length) {
+    ev.innerHTML = emptyState('—', 'Nothing on the calendar today.');
+  } else {
+    for (const e of data.events) {
+      const li = document.createElement('li');
+      li.className = 'card';
+      const s = new Date(e.starts_at);
+      const en = new Date(e.ends_at);
+      const time = `${s.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})} – ${en.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}`;
+      li.innerHTML = `
+        <div class="body">
+          <div class="title">${escapeHtml(e.title)}</div>
+          <div class="meta"><span class="pill">${escapeHtml(time)}</span>${e.location ? `<span class="pill">${escapeHtml(e.location)}</span>` : ''}</div>
+        </div>`;
+      ev.appendChild(li);
+    }
+  }
+
+  // Tasks (scheduled today + due today, deduped)
+  const tasks = $('#today-tasks');
+  tasks.innerHTML = '';
+  const byId = new Map();
+  for (const t of [...data.scheduled_tasks, ...data.due_tasks]) byId.set(t.id, t);
+  const todayTasks = [...byId.values()];
+  if (!todayTasks.length) {
+    tasks.innerHTML = emptyState('—', 'No tasks scheduled or due today. Plan some on the Plan tab.');
+  } else {
+    for (const t of todayTasks) {
+      const li = document.createElement('li');
+      li.className = `card${t.status === 'done' ? ' done' : ''}`;
+      const checked = t.status === 'done';
+      const when = t.scheduled_start ? new Date(t.scheduled_start).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}) : (t.due_at ? 'due today' : '');
+      li.innerHTML = `
+        <button class="checkbox ${checked ? 'checked' : ''}" data-id="${t.id}">${checked ? '✓' : ''}</button>
+        <div class="body">
+          <div class="title">${escapeHtml(t.title)}</div>
+          <div class="meta">${priorityPill(t.priority)}${when ? `<span class="pill">${escapeHtml(when)}</span>` : ''}</div>
+        </div>`;
+      li.querySelector('.checkbox').onclick = async () => {
+        const next = t.status === 'done' ? 'todo' : 'done';
+        await api(`/api/tasks/${t.id}`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
+        loadToday();
+      };
+      tasks.appendChild(li);
+    }
+  }
+
+  // Habits (chips)
+  const habits = $('#today-habits');
+  habits.innerHTML = '';
+  if (!data.habits.length) {
+    habits.innerHTML = `<li class="empty"><div class="why">No habits tracked yet.</div></li>`;
+  } else {
+    for (const h of data.habits) {
+      const li = document.createElement('li');
+      li.className = `habit-chip${h.logged_today ? ' logged' : ''}`;
+      li.innerHTML = `<span>${escapeHtml(h.name)}</span>${h.logged_today ? '<span class="check">✓</span>' : ''}`;
+      li.onclick = async () => {
+        await api(`/api/habits/${h.id}/log`, { method: 'POST', body: '{}' });
+        toast(`Logged ${h.name}`);
+        loadToday();
+      };
+      habits.appendChild(li);
+    }
+  }
+
+  // Journal
+  const jl = $('#today-journal');
+  jl.innerHTML = '';
+  if (!data.recent_journal.length) {
+    jl.innerHTML = emptyState('—', 'No entries yet. Tap the chat: "journal: ..."');
+  } else {
+    for (const j of data.recent_journal.slice(0, 2)) {
+      const li = document.createElement('li');
+      li.className = 'card';
+      li.innerHTML = `
+        <div class="body">
+          <div class="title">${escapeHtml(j.title || j.entry_date)}</div>
+          <div class="meta"><span class="pill">${escapeHtml(j.entry_date)}</span>${j.mood ? `<span class="pill tag-mood">mood ${j.mood}/10</span>` : ''}</div>
+          <div class="meta-body">${escapeHtml((j.body || '').slice(0, 180))}${(j.body || '').length > 180 ? '…' : ''}</div>
+        </div>`;
+      jl.appendChild(li);
+    }
+  }
+}
 
 // --- Modal helper ---------------------------------------------------------
 
@@ -472,7 +594,7 @@ function refreshAllInBackground() {
 }
 
 async function loadAll() {
-  showTab('chat');
+  showTab('today');
   $('#chat-log').innerHTML = '';
   addBubble(
     'Tell me what\'s on your mind, or try:\n  • add task: buy oat milk\n  • add goal: learn to surf\n  • journal: felt steady today\n  • show my tasks',
