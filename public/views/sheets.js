@@ -2,6 +2,7 @@ import { html, useState, useEffect } from "../lib/ui.js";
 import { state, upsert, remove } from "../lib/store.js";
 import {
   TASK_CATEGORIES, PRIORITIES, GOAL_AREAS, GOAL_TIMEFRAMES, HABIT_FREQUENCIES,
+  FOOD_CATEGORIES, APPROVED_FOODS,
   uuid, todayKey, randomPrompt, moodEmoji,
 } from "../lib/utils.js";
 
@@ -13,6 +14,8 @@ export function Sheet({ payload, onClose }) {
   if (payload.type === "mood") content = html`<${MoodSheet} onClose=${onClose} />`;
   if (payload.type === "habit") content = html`<${HabitSheet} habit=${payload.habit} onClose=${onClose} />`;
   if (payload.type === "goal") content = html`<${GoalSheet} goal=${payload.goal} onClose=${onClose} />`;
+  if (payload.type === "pantry") content = html`<${PantrySheet} onClose=${onClose} />`;
+  if (payload.type === "block")  content = html`<${BlockSheet} defaultDate=${payload.defaultDate} replaces=${payload.replaces} onClose=${onClose} />`;
   if (!content) return null;
   return html`
     <div class="sheet-backdrop" onClick=${onClose}>
@@ -422,7 +425,153 @@ function GoalSheet({ goal, onClose }) {
   `;
 }
 
-function Slider({ label, value, onChange, color = "#7C3AED" }) {
+function PantrySheet({ onClose }) {
+  const items = state.pantry.value;
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("protein");
+
+  async function add() {
+    if (!name.trim()) return;
+    await upsert("pantry", {
+      id: uuid(),
+      name: name.trim().toLowerCase(),
+      category,
+      addedAt: new Date().toISOString(),
+    });
+    setName("");
+  }
+  async function del(id) { await remove("pantry", id); }
+  async function quickAdd(n, cat) {
+    if (items.some((i) => i.name === n)) return;
+    await upsert("pantry", { id: uuid(), name: n, category: cat, addedAt: new Date().toISOString() });
+  }
+
+  return html`
+    <div class="sheet-head">
+      <button class="link" onClick=${onClose}>Done</button>
+      <h2>Pantry</h2>
+      <span></span>
+    </div>
+    <div class="sheet-body">
+      <small class="muted">Approved ingredients only. No eggs (rule).</small>
+      <label class="field">
+        <span>Add ingredient</span>
+        <input value=${name} onInput=${(e) => setName(e.target.value)} placeholder="e.g. salmon" onKeyDown=${(e) => { if (e.key === "Enter") add(); }} />
+      </label>
+      <div class="field">
+        <span>Category</span>
+        <div class="seg-row">
+          ${FOOD_CATEGORIES.map((c) => html`
+            <button class=${`pill ${category === c.id ? "active" : ""}`} onClick=${() => setCategory(c.id)} key=${c.id}>${c.icon} ${c.label}</button>
+          `)}
+        </div>
+      </div>
+      <button class="btn-primary" onClick=${add}>Add to pantry</button>
+
+      ${FOOD_CATEGORIES.map((c) => html`
+        <div key=${c.id}>
+          <h3>${c.icon} ${c.label}</h3>
+          <div class="seg-row">
+            ${(APPROVED_FOODS[c.id] || []).map((f) => {
+              const have = items.some((i) => i.name === f);
+              return html`<button class=${`pill ${have ? "active" : ""}`} onClick=${() => quickAdd(f, c.id)} key=${f}>${have ? "✓ " : "+ "}${f}</button>`;
+            })}
+          </div>
+        </div>
+      `)}
+
+      ${items.length > 0 && html`
+        <h3>In pantry</h3>
+        <div class="seg-row">
+          ${items.map((i) => html`<button class="pill outline" key=${i.id} onClick=${() => del(i.id)}>${i.name} ×</button>`)}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function BlockSheet({ defaultDate, replaces, onClose }) {
+  const editing = !!replaces;
+  const [title, setTitle] = useState(replaces?.title ?? "");
+  const [icon, setIcon] = useState(replaces?.icon ?? "🌿");
+  const [startMin, setStartMin] = useState(replaces?.startMin ?? 9 * 60);
+  const [endMin, setEndMin] = useState(replaces?.endMin ?? 10 * 60);
+  const [category, setCategory] = useState(replaces?.category ?? "personal");
+  const date = defaultDate || new Date().toISOString();
+
+  const icons = ["🌿","💧","🥣","🏃","🧠","💼","🥗","🎨","📓","🛀","📞","🧘","🍽️","🌙"];
+
+  async function save() {
+    if (!title.trim()) return;
+    if (replaces) {
+      await upsert("actualBlocks", {
+        id: uuid(),
+        date, presetId: replaces.id,
+        startMin: Number(startMin), endMin: Number(endMin),
+        title: title.trim(), icon, category,
+        completed: true, skipped: false, notes: "",
+      });
+    } else {
+      await upsert("actualBlocks", {
+        id: uuid(),
+        date, presetId: null,
+        startMin: Number(startMin), endMin: Number(endMin),
+        title: title.trim(), icon, category,
+        completed: false, skipped: false, notes: "",
+      });
+    }
+    onClose();
+  }
+
+  return html`
+    <div class="sheet-head">
+      <button class="link" onClick=${onClose}>Cancel</button>
+      <h2>${editing ? "Replace block" : "New block"}</h2>
+      <button class="link primary" onClick=${save} disabled=${!title.trim()}>Save</button>
+    </div>
+    <div class="sheet-body">
+      ${editing && html`<div class="prompt-inline">Replacing original: <b>${replaces.title}</b>. Original stays visible.</div>`}
+      <label class="field">
+        <span>Title</span>
+        <input value=${title} onInput=${(e) => setTitle(e.target.value)} placeholder="e.g. Walk + audiobook" autofocus />
+      </label>
+      <div class="field">
+        <span>Icon</span>
+        <div class="icon-grid">
+          ${icons.map((i) => html`<button class=${`icon-pick ${icon === i ? "active" : ""}`} style=${`--c:#C77B7B`} onClick=${() => setIcon(i)} key=${i}>${i}</button>`)}
+        </div>
+      </div>
+      <div class="row">
+        <span>Start</span>
+        <input type="time" value=${minToTimeStr(startMin)} onInput=${(e) => setStartMin(timeStrToMin(e.target.value))} style="max-width:140px;" />
+      </div>
+      <div class="row">
+        <span>End</span>
+        <input type="time" value=${minToTimeStr(endMin)} onInput=${(e) => setEndMin(timeStrToMin(e.target.value))} style="max-width:140px;" />
+      </div>
+      <div class="field">
+        <span>Category</span>
+        <div class="cat-grid">
+          ${TASK_CATEGORIES.map((c) => html`
+            <button class=${`cat ${category === c.id ? "active" : ""}`} style=${`--c:${c.color}`} onClick=${() => setCategory(c.id)} key=${c.id}>${c.icon} ${c.label}</button>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function minToTimeStr(min) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function timeStrToMin(s) {
+  const [h, m] = s.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function Slider({ label, value, onChange, color = "#C77B7B" }) {
   return html`
     <div class="field">
       <span>${label} <small class="muted">${value}/10</small></span>

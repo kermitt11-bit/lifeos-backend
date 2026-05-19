@@ -1,26 +1,16 @@
 {
-  "name": "LifeOS — Planner Journal",
-  "short_name": "LifeOS",
-  "description": "Plan your day, journal your thoughts, build habits, hit goals.",
+  "name": "Life OS",
+  "short_name": "Life OS",
+  "description": "Calm, adaptive, mobile-first personal operating system. Plan, eat, move, recover, grow.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0B0B12",
-  "theme_color": "#7C3AED",
-  "categories": ["productivity", "lifestyle"],
+  "background_color": "#FBF6F1",
+  "theme_color": "#C77B7B",
+  "categories": ["productivity", "lifestyle", "health"],
   "icons": [
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

@@ -1,4 +1,4 @@
-const VERSION = "lifeos-v2";
+const VERSION = "lifeos-v3-blossom";
 const SHELL = [
   "/",
   "/index.html",
@@ -14,19 +14,28 @@ const SHELL = [
   "/lib/utils.js",
   "/lib/haptic.js",
   "/lib/install.js",
-  "/views/today.js",
+  "/lib/ai.js",
+  "/views/home.js",
   "/views/planner.js",
-  "/views/journal.js",
+  "/views/food.js",
+  "/views/move.js",
+  "/views/health.js",
   "/views/habits.js",
+  "/views/journal.js",
   "/views/goals.js",
+  "/views/reset.js",
+  "/views/reviews.js",
   "/views/insights.js",
+  "/views/more.js",
   "/views/settings.js",
   "/views/sheets.js",
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(VERSION).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting())
+    caches.open(VERSION).then((cache) =>
+      Promise.all(SHELL.map((url) => cache.add(url).catch(() => null)))
+    ).then(() => self.skipWaiting())
   );
 });
 
@@ -43,7 +52,6 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // Network-first for the HTML shell so updates land quickly.
   if (req.mode === "navigate") {
     event.respondWith(
       fetch(req)
@@ -57,7 +65,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for everything else under our origin.
   if (url.origin === location.origin) {
     event.respondWith(
       caches.match(req).then((cached) =>

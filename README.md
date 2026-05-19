@@ -1,8 +1,8 @@
-# LifeOS — Planner Journal
+# Life OS
 
-A planner + journal you can use today on iPhone (PWA, no Mac required) **and**
-a full native iOS SwiftUI app for when you have Xcode access. Both share the
-same feature surface; both store data locally on-device.
+A calm, adaptive, mobile-first personal operating system. **Plan, eat, move, recover, grow.**
+PWA you can install on your iPhone in 30 seconds, plus a SwiftUI native app and an
+optional sync backend.
 
 ```
 .
@@ -14,120 +14,62 @@ same feature surface; both store data locally on-device.
     └── index.js
 ```
 
+## What's inside
+
+Ten pillars, equal weight to food, hobbies, and structure:
+
+1. **Home** — greeting · mood · water / sleep / steps rings · next-best step · quick actions
+2. **Planner** — preset vs actual timeline, week strip, move / skip / replace / reschedule (originals never disappear)
+3. **Food** — pantry, meal suggestions from what you actually have (no eggs, snack-box rule, explicit portions, fallback meals), AI meal builder, MyNetDiary import
+4. **Workout** — energy-aware suggestions (low / medium / high) with equipment matching, AI workout builder, JustFit import
+5. **Hobbies** — creative · skill · restorative · social. Mood/energy/time filters with 5-minute starts and deep paths.
+6. **Health** — water · sleep · steps · supplements with simple logging, week trends, Apple Health JSON import
+7. **Habits** — streaks, weekly targets, 14-day strip + 12-week heatmap
+8. **Reset** — overwhelmed · off day · low energy · anxious. Shrink the world to 30 minutes.
+9. **Reviews** — weekly & monthly summaries: wins, patterns, friction, one useful upgrade (with optional AI summary)
+10. **Settings** — cream / cocoa theme · health targets · integrations · local-first export/erase
+
+### Integrations
+
+| App           | Direction | How                                                                              |
+| ------------- | --------- | -------------------------------------------------------------------------------- |
+| Apple Health  | in        | Paste JSON `{steps, sleep, weight}` from a Shortcut or the iOS companion         |
+| MyNetDiary    | in        | Paste the daily summary — we parse meals + macros and log them                   |
+| JustFit       | in        | Paste a finished session — we log title, minutes, calories, exercises            |
+| ChatGPT       | out       | Add an OpenAI key — powers AI meals, AI workouts, AI resets, kind weekly reviews |
+
 ## Install on iPhone (no Mac, ~30 seconds)
 
 This repo deploys to Vercel automatically. Once the latest commit is live:
 
 1. Open the deploy URL in **Safari** on your iPhone
-   (e.g. `https://lifeos-backend-*.vercel.app/`)
 2. Tap the **Share** icon → **Add to Home Screen** → **Add**
-3. Launch from your home screen — it now runs full-screen like a native app,
-   saves your data to the phone (IndexedDB), and works offline.
+3. Launch from your home screen — runs full-screen, works offline, saves to IndexedDB
 
-Your data lives in your phone's storage. Nothing leaves the device.
+Your data lives in your phone's storage. Nothing leaves the device unless you connect an integration.
 
-## What's in the app
+## Design principles
 
-Five tabs cover the daily planner-journal loop:
-
-- **Today** — greeting, mood check-in, today's tasks, overdue work, reflection
-  prompt, habit chips with a streak counter.
-- **Planner** — week strip, list mode and time-blocked schedule, task
-  priorities, categories, subtasks, reminders, estimates vs. actuals.
-- **Journal** — mood + gratitude + highlights + challenges + tomorrow's focus,
-  rotating reflection prompts, full search, tag filtering, month grouping,
-  streak/word-count stats.
-- **Habits** — daily/weekly cadence, target per week, 14-day strip,
-  12-week heatmap, streaks, custom icon + color, optional reminder.
-- **Insights** — mood trend chart, daily task completion bars, time-by-category,
-  habit consistency, goal progress (Swift Charts).
-
-Plus **Goals** (timeframe, area, progress slider, milestones, linked tasks) and
-**Settings** (theme, evening journal reminder, JSON export, local data wipe,
-optional backend sync).
-
-Everything is **local-first** via SwiftData. Sync is opt-in.
-
-## Open & run the iOS app
-
-Requirements: macOS with Xcode 15.0+ and an iOS 17 simulator or device.
-
-```bash
-open ios/LifeOS.xcodeproj
-```
-
-Then `⌘R` to build and run. The first launch shows a 4-step onboarding;
-after that you land on the Today tab.
-
-### Bundle identifier
-
-The default bundle ID is `com.lifeos.planner`. To deploy to a physical
-device, change it under **Signing & Capabilities → Bundle Identifier** and
-set your Development Team.
-
-### Notifications
-
-The first time you tap "Request notification permission" in Settings the
-system prompt appears. Task reminders, habit reminders, and a nightly
-journal reminder are all scheduled through `UNUserNotificationCenter`.
-
-## Backend (optional)
-
-The iOS app works fully offline. The backend exists so you can sync data
-between devices.
-
-```bash
-npm install
-npm start                 # http://localhost:3000/health
-```
-
-Set the following environment variables (see `.env.example`):
-
-| Variable                   | Purpose                                            |
-| -------------------------- | -------------------------------------------------- |
-| `SUPABASE_URL`             | Your Supabase project URL                          |
-| `SUPABASE_SERVICE_ROLE_KEY`| Service role key for server-side writes            |
-| `API_TOKEN`                | Optional shared secret; the iOS app sends Bearer X |
-| `PORT`                     | Defaults to 3000                                   |
-
-Endpoints (auth required if `API_TOKEN` is set):
-
-```
-GET    /health
-GET    /journal      POST /journal      DELETE /journal/:id
-GET    /tasks        POST /tasks        DELETE /tasks/:id
-GET    /habits       POST /habits       DELETE /habits/:id
-GET    /goals        POST /goals        DELETE /goals/:id
-GET    /moods        POST /moods        DELETE /moods/:id
-```
-
-POST accepts either a single record or `{ items: [...] }`. Records are
-upserted by `id`.
-
-### Connecting the app to a backend
-
-In the app: **Insights → Settings & data → Backend sync**, paste the URL
-and (optionally) the API token, then tap **Test connection**.
+- The original plan must always remain visible.
+- The user can move, skip, replace, or reschedule items without deleting the original.
+- Never shame, never rigid, never overwhelming.
+- Soft cream + blush palette, rounded cards, serif headings, gentle motion only.
+- Hobbies are a major pillar, equal to food and workouts.
+- Reset, not catch-up, after off days.
 
 ## Architecture
 
+- **Frontend:** Preact + htm template tags (no build step), Preact Signals for state.
+- **Storage:** IndexedDB (`/lib/db.js`), with a kv store for prefs. Local-first.
+- **AI:** Optional OpenAI client (`/lib/ai.js`) — opt-in, key stored locally.
+- **Backend:** Express + Supabase (optional, see `api/index.js`).
+- **iOS native:** SwiftUI (iOS 17+) in `/ios/LifeOS`, SwiftData persistence.
+
+## Run locally
+
+```bash
+# Static PWA — serve /public
+python3 -m http.server -d public 5173
+# Optional backend
+npm install && npm start
 ```
-LifeOSApp
-└── modelContainer(JournalEntry, PlannerTask, TimeBlock, Habit, HabitLog, Goal, MoodEntry)
-    └── RootView (onboarding gate)
-        └── TabView
-            ├── TodayView
-            ├── PlannerView ─→ AddTaskSheet · AddTimeBlockSheet · TaskDetailSheet
-            ├── JournalView ─→ JournalEntryDetailView · NewJournalEntryView · MoodCheckinSheet
-            ├── HabitsView ─→ HabitDetailView · NewHabitSheet
-            └── InsightsView ─→ SettingsView ─→ GoalsView · BackendSyncView
-```
-
-Persistence is SwiftData; theming is centralized in `Theme/Theme.swift`;
-charting uses the system `Charts` framework.
-
-## Project status
-
-Production-shaped scaffold with full feature surface area. Replace the
-default app icon, set your team in Signing & Capabilities, and you're
-ready to ship to TestFlight.
