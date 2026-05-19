@@ -1,6 +1,11 @@
 const DB_NAME = "lifeos";
-const DB_VERSION = 1;
-const STORES = ["entries", "tasks", "habits", "habitLogs", "goals", "moods", "kv"];
+const DB_VERSION = 2;
+const STORES = [
+  "entries", "tasks", "habits", "habitLogs", "goals", "moods",
+  "pantry", "meals", "workouts", "hobbies", "hobbyLogs",
+  "healthLogs", "presetBlocks", "actualBlocks", "reviews",
+  "kv",
+];
 
 let dbPromise = null;
 
@@ -10,7 +15,7 @@ function openDB() {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onerror = () => reject(req.error);
     req.onsuccess = () => resolve(req.result);
-    req.onupgradeneeded = (event) => {
+    req.onupgradeneeded = () => {
       const db = req.result;
       for (const name of STORES) {
         if (!db.objectStoreNames.contains(name)) {

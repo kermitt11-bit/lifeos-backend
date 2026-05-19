@@ -2,17 +2,41 @@ import { signal } from "https://esm.sh/@preact/signals@1.2.3";
 import * as db from "./db.js";
 
 export const state = {
+  // existing
   entries: signal([]),
   tasks: signal([]),
   habits: signal([]),
   habitLogs: signal([]),
   goals: signal([]),
   moods: signal([]),
+  // food
+  pantry: signal([]),
+  meals: signal([]),
+  // movement
+  workouts: signal([]),
+  hobbies: signal([]),
+  hobbyLogs: signal([]),
+  // health
+  healthLogs: signal([]),
+  // planner preset/actual
+  presetBlocks: signal([]),
+  actualBlocks: signal([]),
+  // reflections
+  reviews: signal([]),
+  // kv preferences
   userName: signal(""),
   themePref: signal("system"),
   reminderHour: signal(21),
   reminderEnabled: signal(false),
   hasOnboarded: signal(false),
+  // health targets
+  waterTargetMl: signal(2000),
+  sleepTargetHours: signal(8),
+  stepsTarget: signal(8000),
+  // integrations
+  integrations: signal({}),
+  // openai
+  openaiKey: signal(""),
   ready: signal(false),
 };
 
@@ -23,6 +47,15 @@ const STORE_FOR = {
   habitLogs: "habitLogs",
   goals: "goals",
   moods: "moods",
+  pantry: "pantry",
+  meals: "meals",
+  workouts: "workouts",
+  hobbies: "hobbies",
+  hobbyLogs: "hobbyLogs",
+  healthLogs: "healthLogs",
+  presetBlocks: "presetBlocks",
+  actualBlocks: "actualBlocks",
+  reviews: "reviews",
 };
 
 export async function load() {
@@ -34,6 +67,11 @@ export async function load() {
   state.reminderHour.value = Number(await db.kvGet("reminderHour", 21)) || 21;
   state.reminderEnabled.value = Boolean(await db.kvGet("reminderEnabled", false));
   state.hasOnboarded.value = Boolean(await db.kvGet("hasOnboarded", false));
+  state.waterTargetMl.value = Number(await db.kvGet("waterTargetMl", 2000)) || 2000;
+  state.sleepTargetHours.value = Number(await db.kvGet("sleepTargetHours", 8)) || 8;
+  state.stepsTarget.value = Number(await db.kvGet("stepsTarget", 8000)) || 8000;
+  state.integrations.value = (await db.kvGet("integrations", {})) || {};
+  state.openaiKey.value = (await db.kvGet("openaiKey", "")) || "";
   state.ready.value = true;
 }
 
