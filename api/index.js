@@ -29,7 +29,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-const collections = ["journal", "tasks", "habits", "goals", "moods"];
+const collections = ["journal", "tasks", "habits", "goals", "moods", "pantry", "mealPlans"];
 
 for (const name of collections) {
   app.get(`/${name}`, requireAuth, async (req, res) => {

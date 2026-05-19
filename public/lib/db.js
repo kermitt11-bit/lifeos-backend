@@ -1,6 +1,6 @@
 const DB_NAME = "lifeos";
-const DB_VERSION = 1;
-const STORES = ["entries", "tasks", "habits", "habitLogs", "goals", "moods", "kv"];
+const DB_VERSION = 2;
+const STORES = ["entries", "tasks", "habits", "habitLogs", "goals", "moods", "pantry", "mealPlans", "kv"];
 
 let dbPromise = null;
 

@@ -8,6 +8,8 @@ export const state = {
   habitLogs: signal([]),
   goals: signal([]),
   moods: signal([]),
+  pantry: signal([]),
+  mealPlans: signal([]),
   userName: signal(""),
   themePref: signal("system"),
   reminderHour: signal(21),
@@ -23,6 +25,8 @@ const STORE_FOR = {
   habitLogs: "habitLogs",
   goals: "goals",
   moods: "moods",
+  pantry: "pantry",
+  mealPlans: "mealPlans",
 };
 
 export async function load() {

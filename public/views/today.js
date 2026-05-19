@@ -4,6 +4,7 @@ import {
   greeting, fmtDate, moodEmoji, randomPrompt,
   isSameDay, startOfDay, categoryFor, priorityFor, streakFor, uuid,
 } from "../lib/utils.js";
+import { dateKey, findNextSlot, slotFor } from "../lib/meals.js";
 import { tap, success } from "../lib/haptic.js";
 
 export function TodayView({ openSheet }) {
@@ -33,6 +34,9 @@ export function TodayView({ openSheet }) {
   const latestMood = moods[moods.length - 1];
   const moodToday = latestMood && isSameDay(latestMood.date, today);
   const prompt = useMemo(() => randomPrompt(), [entries.length]);
+
+  const todayPlan = state.mealPlans.value.find((p) => p.id === dateKey(today));
+  const nextMeal = todayPlan ? findNextSlot(todayPlan, new Date()) : null;
 
   const completedCount = todayTasks.filter((t) => t.completed).length;
 
@@ -88,6 +92,19 @@ export function TodayView({ openSheet }) {
           <span>Mood</span>
         </button>
       </div>
+
+      ${nextMeal && nextMeal.meal && html`
+        <div class="card next-meal" style=${`--c:${nextMeal.slot.color}`}>
+          <div class="next-meal-head">
+            <span>${nextMeal.slot.icon} Next: ${nextMeal.slot.label}</span>
+            <strong>${nextMeal.meal.time}</strong>
+          </div>
+          <div class="next-meal-body">
+            <strong>${nextMeal.meal.name}</strong>
+            <small class="muted">${nextMeal.meal.minutes}m · ${nextMeal.meal.ingredients.length} ingredients</small>
+          </div>
+        </div>
+      `}
 
       <button class="card mood-card" onClick=${() => openSheet({ type: "mood" })}>
         <span class="mood-emoji">${moodEmoji(latestMood?.score ?? 6)}</span>

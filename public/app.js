@@ -6,6 +6,7 @@ import { JournalView } from "/views/journal.js";
 import { HabitsView } from "/views/habits.js";
 import { GoalsView } from "/views/goals.js";
 import { InsightsView } from "/views/insights.js";
+import { MealsView } from "/views/meals.js";
 import { SettingsView } from "/views/settings.js";
 import { Sheet } from "/views/sheets.js";
 import { moodEmoji } from "/lib/utils.js";
@@ -16,6 +17,7 @@ const TABS = [
   { id: "planner",  label: "Planner",  icon: "🗓" },
   { id: "journal",  label: "Journal",  icon: "📓" },
   { id: "habits",   label: "Habits",   icon: "✅" },
+  { id: "meals",    label: "Meals",    icon: "🍽️" },
   { id: "insights", label: "Insights", icon: "📊" },
 ];
 
@@ -61,6 +63,7 @@ function App() {
   else if (tab === "planner") body = html`<${PlannerView} openSheet=${setSheet} />`;
   else if (tab === "journal") body = html`<${JournalView} openSheet=${setSheet} />`;
   else if (tab === "habits") body = html`<${HabitsView} openSheet=${setSheet} />`;
+  else if (tab === "meals") body = html`<${MealsView} openSheet=${setSheet} />`;
   else if (tab === "insights")
     body = html`<${InsightsView} openSheet=${setSheet} openSettings=${() => setShowSettings(true)} />`;
 
