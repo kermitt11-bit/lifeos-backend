@@ -4,6 +4,10 @@ import {
   TASK_CATEGORIES, PRIORITIES, GOAL_AREAS, GOAL_TIMEFRAMES, HABIT_FREQUENCIES,
   uuid, todayKey, randomPrompt, moodEmoji,
 } from "../lib/utils.js";
+import {
+  PANTRY_KINDS, PANTRY_LOCATIONS, PANTRY_GROUPS, RECIPES, SLOTS,
+  kindFor, slotFor,
+} from "../lib/meals.js";
 
 export function Sheet({ payload, onClose }) {
   if (!payload) return null;
@@ -13,6 +17,8 @@ export function Sheet({ payload, onClose }) {
   if (payload.type === "mood") content = html`<${MoodSheet} onClose=${onClose} />`;
   if (payload.type === "habit") content = html`<${HabitSheet} habit=${payload.habit} onClose=${onClose} />`;
   if (payload.type === "goal") content = html`<${GoalSheet} goal=${payload.goal} onClose=${onClose} />`;
+  if (payload.type === "pantry") content = html`<${PantrySheet} item=${payload.item} onClose=${onClose} />`;
+  if (payload.type === "meal-swap") content = html`<${MealSwapSheet} planId=${payload.planId} slotId=${payload.slotId} onClose=${onClose} />`;
   if (!content) return null;
   return html`
     <div class="sheet-backdrop" onClick=${onClose}>
@@ -418,6 +424,150 @@ function GoalSheet({ goal, onClose }) {
         <textarea rows="4" value=${milestones} onInput=${(e) => setMilestones(e.target.value)} placeholder="Free-form notes"></textarea>
       </label>
       ${editing && html`<button class="btn-danger" onClick=${del}>Delete goal</button>`}
+    </div>
+  `;
+}
+
+function PantrySheet({ item, onClose }) {
+  const editing = !!item;
+  const [kind, setKind] = useState(item?.kind || "egg");
+  const [qty, setQty] = useState(item?.qty ?? 1);
+  const [location, setLocation] = useState(item?.location || kindFor(item?.kind || "egg")?.cat || "fridge");
+  const [search, setSearch] = useState("");
+  const k = kindFor(kind);
+
+  const matches = PANTRY_KINDS.filter((x) => !search || x.label.toLowerCase().includes(search.toLowerCase()));
+
+  async function save() {
+    const k2 = kindFor(kind);
+    if (!k2) return;
+    await upsert("pantry", {
+      id: item?.id || uuid(),
+      kind,
+      qty: Number(qty) || 1,
+      unit: k2.unit,
+      location,
+      addedAt: item?.addedAt || new Date().toISOString(),
+    });
+    onClose();
+  }
+
+  async function del() {
+    if (!item) return onClose();
+    if (!confirm("Remove this pantry item?")) return;
+    await remove("pantry", item.id);
+    onClose();
+  }
+
+  return html`
+    <div class="sheet-head">
+      <button class="link" onClick=${onClose}>Cancel</button>
+      <h2>${editing ? "Edit pantry item" : "Add pantry item"}</h2>
+      <button class="link primary" onClick=${save}>Save</button>
+    </div>
+    <div class="sheet-body">
+      ${!editing && html`
+        <label class="field">
+          <span>Search</span>
+          <input value=${search} onInput=${(e) => setSearch(e.target.value)} placeholder="e.g. eggs, oats, spinach" autofocus />
+        </label>
+        <div class="staples sheet-staples">
+          ${matches.slice(0, 24).map((x) => html`
+            <button class=${`staple ${kind === x.id ? "have" : ""}`} key=${x.id} onClick=${() => { setKind(x.id); setLocation(x.cat); }}>
+              <span>${x.icon}</span>
+              <small>${x.label}</small>
+            </button>
+          `)}
+        </div>
+      `}
+
+      <div class="field">
+        <span>Item</span>
+        <div class="cat-grid">
+          <div class="cat active" style="--c:#7C3AED">${k?.icon} ${k?.label}</div>
+        </div>
+      </div>
+
+      <label class="field">
+        <span>Quantity (${k?.unit || ""})</span>
+        <input type="number" min="0" step="0.5" value=${qty} onInput=${(e) => setQty(e.target.value)} />
+      </label>
+
+      <div class="field">
+        <span>Where is it?</span>
+        <div class="seg-row">
+          ${PANTRY_LOCATIONS.map((l) => html`
+            <button class=${`seg ${location === l.id ? "active" : ""}`} onClick=${() => setLocation(l.id)} key=${l.id}>${l.icon} ${l.label}</button>
+          `)}
+        </div>
+      </div>
+
+      ${editing && html`<button class="btn-danger" onClick=${del}>Remove from pantry</button>`}
+    </div>
+  `;
+}
+
+function MealSwapSheet({ planId, slotId, onClose }) {
+  const plan = state.mealPlans.value.find((p) => p.id === planId);
+  const slot = slotFor(slotId);
+  const pantry = state.pantry.value;
+  const kindSet = new Set(pantry.map((p) => p.kind));
+
+  const slotMatch = slot.id.startsWith("snack") ? "snack" : slot.id;
+  const candidates = RECIPES.filter((r) => {
+    if (slotMatch === "snack") return r.slot === "snack-am" || r.slot === "snack-pm";
+    return r.slot === slotMatch;
+  });
+
+  const ranked = candidates.map((r) => {
+    const required = r.needs.filter((n) => !n.optional);
+    const missing = required.filter((n) => !kindSet.has(n.kind));
+    return { r, missing, ready: missing.length === 0 };
+  }).sort((a, b) => Number(b.ready) - Number(a.ready) || a.missing.length - b.missing.length);
+
+  async function pick(r) {
+    if (!plan) return onClose();
+    await upsert("mealPlans", {
+      ...plan,
+      slots: {
+        ...plan.slots,
+        [slotId]: {
+          recipeId: r.id,
+          name: r.name,
+          time: plan.slots[slotId]?.time || slot.time,
+          minutes: r.minutes,
+          steps: r.steps,
+          note: r.note || null,
+          ingredients: r.needs.map((n) => ({ kind: n.kind, qty: n.qty, unit: n.unit, optional: !!n.optional })),
+          eaten: false,
+          skipped: false,
+          hungerBefore: null,
+          hungerAfter: null,
+        },
+      },
+    });
+    onClose();
+  }
+
+  return html`
+    <div class="sheet-head">
+      <button class="link" onClick=${onClose}>Cancel</button>
+      <h2>Swap ${slot.label.toLowerCase()}</h2>
+      <span class="link" style="opacity:0">.</span>
+    </div>
+    <div class="sheet-body">
+      <p class="muted small">Pick a different recipe. Ready ones use only what you have.</p>
+      ${ranked.map(({ r, missing, ready }) => html`
+        <button class=${`card recipe-card swap ${ready ? "ready" : ""}`} key=${r.id} onClick=${() => pick(r)}>
+          <div class="recipe-head">
+            <strong>${r.name}</strong>
+            <small class="muted">${r.minutes}m</small>
+          </div>
+          ${ready
+            ? html`<span class="badge success">Ready</span>`
+            : html`<span class="muted small">Missing: ${missing.map((m) => kindFor(m.kind)?.label || m.kind).join(", ")}</span>`}
+        </button>
+      `)}
     </div>
   `;
 }
